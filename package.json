@@ -1,0 +1,55 @@
+{
+  "name": "@flydotio/sprites-opencode-plugin",
+  "version": "0.1.0",
+  "description": "Use Fly.io Sprites as isolated remote development environments from OpenCode.",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./server": "./index.js"
+  },
+  "files": [
+    "index.js",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "check": "npm run format:check && npm run typecheck && npm test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "node --test test/plugin.test.js test/opencode.integration.test.js",
+    "test:bun": "bun test test/plugin.bun.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "sprites",
+    "fly.io",
+    "mcp",
+    "development-environments",
+    "sandbox"
+  ],
+  "homepage": "https://sprites.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/superfly/sprites-opencode-plugin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/superfly/sprites-opencode-plugin/issues"
+  },
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20",
+    "opencode": ">=1.18.23 <2"
+  },
+  "devDependencies": {
+    "@opencode-ai/plugin": "1.18.23",
+    "opencode-ai": "1.18.23",
+    "prettier": "^3.9.6",
+    "typescript": "^7.0.2"
+  }
+}
