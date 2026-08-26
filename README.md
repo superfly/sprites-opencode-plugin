@@ -32,6 +32,8 @@ If the package is not yet available from npm, clone this repository and point Op
 
 Use an absolute `file://` URL. This installation form has the same features as the npm package.
 
+Use the package-directory entry shown above rather than copying or symlinking `index.js` into an OpenCode `plugins` directory. This plugin uses its package `./server` export and is not distributed as a drop-in file plugin.
+
 ## Authenticate
 
 Run `/sprites-status` or ask OpenCode to list your Sprites. The first Sprites request should start OpenCode's browser OAuth flow.
