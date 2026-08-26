@@ -18,7 +18,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "node --test test/plugin.test.js test/opencode.integration.test.js",
-    "test:bun": "bun test test/plugin.bun.js",
+    "test:bun": "bun test ./test/plugin.bun.js",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [
