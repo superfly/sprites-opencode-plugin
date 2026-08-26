@@ -27,7 +27,7 @@ Point OpenCode at the checkout while developing:
 
 The directory form lets OpenCode resolve the package's `./server` export and enforce its `engines.opencode` range.
 
-For a quick drop-in test, you can instead copy `index.js` to `.opencode/plugins/sprites.js`; global drop-ins live at `~/.config/opencode/plugins/`. OpenCode loads drop-ins as bare file specifiers, so they cannot receive a plugin options object. Use the package-directory form when testing non-default options.
+Do not copy or symlink `index.js` into `.opencode/plugins/` or `~/.config/opencode/plugins/`. It is a package entry point rather than a drop-in file plugin, and the TUI may try to load it through the wrong plugin path. Drop-in plugins also cannot receive an options object. Use package-directory configuration for local development.
 
 ## Run checks
 
