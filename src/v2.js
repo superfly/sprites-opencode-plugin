@@ -120,15 +120,19 @@ function serverConfig(options) {
 }
 
 /**
- * Strips mention offsets that no longer line up once a command rewrites the
- * prompt text around the caller's arguments.
+ * Returns the attachment key only when it carries entries, and strips the
+ * mention offsets that no longer line up once a command rewrites the prompt
+ * text around the caller's arguments.
  *
  * @template {{mention?: unknown}} T
+ * @param {string} key
  * @param {ReadonlyArray<T> | undefined} entries
  */
-function withoutMentions(entries) {
-  if (!entries?.length) return undefined;
-  return entries.map(({ mention: _mention, ...entry }) => entry);
+function withoutMentions(key, entries) {
+  if (!entries?.length) return {};
+  return {
+    [key]: entries.map(({ mention: _mention, ...entry }) => entry),
+  };
 }
 
 /** @type {import("@opencode-ai/plugin-v2").Plugin.Plugin} */
@@ -209,14 +213,16 @@ const SpritesPlugin = {
             activate(sessionID);
             const args =
               typeof prompt.text === "string" ? prompt.text.trim() : "";
+            // Attachment keys must be absent when there is nothing to send.
+            // An explicit undefined fails prompt validation.
             await ctx.session.prompt({
               sessionID,
               text: args
                 ? `${template}\n\nAdditional request: ${args}`
                 : template,
-              files: withoutMentions(prompt.files),
-              agents: withoutMentions(prompt.agents),
-              skills: withoutMentions(prompt.skills),
+              ...withoutMentions("files", prompt.files),
+              ...withoutMentions("agents", prompt.agents),
+              ...withoutMentions("skills", prompt.skills),
               delivery,
             });
           },

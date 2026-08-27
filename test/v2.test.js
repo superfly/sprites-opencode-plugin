@@ -137,6 +137,26 @@ test("registers commands that prompt the session", async () => {
   assert.deepEqual(harness.prompts[1].files, [{ uri: "file:///note.md" }]);
 });
 
+test("a prompt with no attachments omits the attachment keys", async () => {
+  // Prompt validation rejects an explicit undefined, so an empty attachment
+  // list must not appear as a key at all.
+  const harness = await setup();
+
+  await harness
+    .command("sprites-status")
+    .execute({ sessionID: "cmd", prompt: { text: "" }, delivery: "steer" });
+
+  const [input] = harness.prompts;
+  for (const key of ["files", "agents", "skills"]) {
+    assert.equal(key in input, false, key);
+  }
+  assert.deepEqual(Object.keys(input).sort(), [
+    "delivery",
+    "sessionID",
+    "text",
+  ]);
+});
+
 test("a command run marks its session active", async () => {
   const harness = await setup();
 
