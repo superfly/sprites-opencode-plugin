@@ -9,5 +9,10 @@
     "strict": true,
     "target": "ES2022"
   },
-  "include": ["index.js", "test/type-contract.ts"]
+  "include": [
+    "src/shared.js",
+    "src/v1.js",
+    "src/v2.js",
+    "test/type-contract.ts"
+  ]
 }

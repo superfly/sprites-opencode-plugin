@@ -1,15 +1,15 @@
 {
   "name": "@flydotio/sprites-opencode-plugin",
   "version": "0.1.0",
-  "description": "Use Fly.io Sprites as isolated remote development environments from OpenCode.",
+  "description": "Use Fly.io Sprites as isolated remote development environments from OpenCode 1 and OpenCode 2.",
   "type": "module",
-  "main": "./index.js",
+  "main": "./src/v2.js",
   "exports": {
-    ".": "./index.js",
-    "./server": "./index.js"
+    ".": "./src/v2.js",
+    "./server": "./src/v1.js"
   },
   "files": [
-    "index.js",
+    "src",
     "LICENSE",
     "README.md"
   ],
@@ -17,9 +17,12 @@
     "check": "npm run format:check && npm run typecheck && npm test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "node --test test/plugin.test.js test/opencode.integration.test.js",
+    "test": "npm run test:exports && npm run test:v1 && npm run test:v2",
+    "test:v1": "node --test test/v1.test.js test/opencode1.integration.test.js",
+    "test:v2": "node --test test/v2.test.js test/opencode2.integration.test.js",
     "test:bun": "bun test ./test/plugin.bun.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:exports": "node --test test/exports.test.js"
   },
   "keywords": [
     "opencode",
@@ -42,12 +45,18 @@
   "publishConfig": {
     "access": "public"
   },
+  "allowScripts": {
+    "@opencode-ai/cli": true,
+    "opencode-ai": true
+  },
   "engines": {
     "node": ">=20",
-    "opencode": ">=1.18.23 <2"
+    "opencode": ">=1.18.23"
   },
   "devDependencies": {
+    "@opencode-ai/cli": "0.0.0-beta-18414",
     "@opencode-ai/plugin": "1.18.23",
+    "@opencode-ai/plugin-v2": "npm:@opencode-ai/plugin@0.0.0-beta-18414",
     "opencode-ai": "1.18.23",
     "prettier": "^3.9.6",
     "typescript": "^7.0.2"

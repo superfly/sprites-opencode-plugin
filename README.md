@@ -2,15 +2,18 @@
 
 Use [Fly.io Sprites](https://sprites.dev) from OpenCode as persistent, isolated Linux environments for builds, tests, sandboxes, previews, and long-running services.
 
+One package supports both OpenCode releases. OpenCode 1 loads the package's `./server` export, and OpenCode 2 loads its `.` export. Each entry point uses the plugin API of its own release, and both share the same server defaults, tool names, guidance, commands, and destructive-tool rules.
+
 The plugin connects OpenCode to the hosted Sprites MCP server, uses OpenCode's browser-based OAuth flow, adds Sprites commands and workflow guidance, and asks for approval before destructive remote operations. You do not need to install the Sprites CLI or create an API token.
 
 ## Requirements
 
-- OpenCode 1.18.23 or newer in the 1.x series
+- OpenCode 1.18.23 or later in the 1.x series, or
+- OpenCode 2 (the `opencode2` beta CLI)
 
 ## Install
 
-Add the package to your `opencode.json`:
+For OpenCode 1, add the package to `opencode.json`. The key is `plugin`:
 
 ```json
 {
@@ -19,9 +22,22 @@ Add the package to your `opencode.json`:
 }
 ```
 
-OpenCode installs npm plugins automatically with Bun at startup. Restart OpenCode after changing the configuration.
+For OpenCode 2, add it to `opencode.jsonc`. The key is `plugins`:
 
-If the package is not yet available from npm, clone this repository and point OpenCode at the checkout instead:
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugins": ["@flydotio/sprites-opencode-plugin"],
+}
+```
+
+OpenCode 2 can also install the package with its CLI:
+
+```sh
+opencode2 plugin add @flydotio/sprites-opencode-plugin
+```
+
+If the package is not yet available from npm, clone this repository and point OpenCode at the checkout. OpenCode 1 needs an absolute `file://` URL. OpenCode 2 accepts a path or a `file://` URL:
 
 ```json
 {
@@ -30,21 +46,22 @@ If the package is not yet available from npm, clone this repository and point Op
 }
 ```
 
-Use an absolute `file://` URL. This installation form has the same features as the npm package.
+Point OpenCode at the package directory, not at one source file. The two entry points come from the package export map, and a drop-in file plugin cannot receive an options object.
 
-Use the package-directory entry shown above rather than copying or symlinking `index.js` into an OpenCode `plugins` directory. This plugin uses its package `./server` export and is not distributed as a drop-in file plugin.
+Restart OpenCode after you change the configuration.
 
 ## Authenticate
 
-Run `/sprites-status` or ask OpenCode to list your Sprites. The first Sprites request should start OpenCode's browser OAuth flow.
+Run `/sprites-status`, or ask OpenCode to list your Sprites. The first Sprites request starts OpenCode's browser OAuth flow.
 
-If the browser does not open, authenticate the plugin-provided server explicitly:
+If the browser does not open, authenticate the server. Use `opencode` for OpenCode 1, and `opencode2` for OpenCode 2:
 
 ```sh
 opencode mcp auth sprites
+opencode2 mcp auth sprites
 ```
 
-Then retry the original request. An empty Sprite list is a successful authenticated result.
+Then do the original request again. An empty Sprite list is a successful authenticated result.
 
 ## Use Sprites
 
@@ -53,34 +70,36 @@ You can ask OpenCode to:
 - List or create Sprites.
 - Clone a repository into a Sprite and run its build or test suite remotely.
 - Start a long-running development server or preview as a Sprite service.
-- Create a filesystem checkpoint before a risky change and restore it later.
-- Inspect or update a Sprite's outbound network policy.
+- Create a filesystem checkpoint before a risky change, and restore it later.
+- Read, write, and move files in the Sprite filesystem.
+- Examine or change a Sprite's outbound network policy.
 
-The plugin also adds two slash commands:
+The plugin also adds two commands:
 
-- `/sprites-status` performs a read-only connectivity and authentication check.
-- `/sprites-smoke` walks through a list → create → exec smoke test. Destroying the test Sprite still requires explicit intent.
+- `/sprites-status` does a read-only connectivity and authentication check.
+- `/sprites-smoke` does a list, create, and exec smoke test. To destroy the test Sprite, you must ask for it.
 
-OpenCode itself continues to run outside the Sprite. Local workspace and shell operations stay on your machine; Sprites MCP tools perform remote work. In particular:
+OpenCode continues to run outside the Sprite. Local workspace and shell operations stay on your machine. The Sprites MCP tools do the remote work:
 
 - One-off remote commands use `sprites_exec`.
-- Long-running remote processes use `sprites_service_*` tools.
-- Reversible filesystem snapshots use `sprites_checkpoint_*` tools.
-- Outbound access is governed by `sprites_policy_network_*` tools.
+- Long-running remote processes use the `sprites_service_*` tools.
+- Reversible filesystem snapshots use the `sprites_checkpoint_*` tools.
+- Remote files use the `sprites_file_*` tools.
+- Outbound access uses the `sprites_policy_network_*` tools.
 
-There is no dedicated MCP file-write tool. For substantial work, clone a repository into the Sprite. For small generated files, ask OpenCode to transfer base64-encoded content rather than relying on nested shell quoting.
+OpenCode 2 groups MCP tools in Code Mode by default. The model then calls these tools as `tools.sprites.<tool>(input)`. The permission action stays `sprites_<tool>`. To put the tools on the model's native tool list instead, set the `codemode` option to `false`.
 
 ## What the plugin adds
 
 - Hosted MCP access at `https://sprites.dev/mcp`.
-- Sprites workflow and safety guidance in relevant sessions without adding that context to unrelated work.
-- Session inheritance so a subagent working with Sprites receives the same guidance as its parent.
+- Sprites workflow and safety guidance in relevant sessions, but not in unrelated work.
+- Session inheritance, so a subagent that works with Sprites gets the same guidance as its parent.
 - Approval prompts for Sprite destruction, checkpoint restore, and complete network-policy replacement.
-- Compaction guidance that preserves active Sprite names, service state, checkpoints, and pending approvals.
+- Under OpenCode 1, compaction guidance that keeps the active Sprite names, service state, checkpoints, and pending approvals. OpenCode 2 has no compaction hook, so that instruction is part of the guidance itself.
 
 ## Options
 
-OpenCode accepts an options object alongside the package specifier:
+OpenCode passes an options object to the plugin. OpenCode 1 uses a tuple, and OpenCode 2 uses an object:
 
 ```json
 {
@@ -88,50 +107,70 @@ OpenCode accepts an options object alongside the package specifier:
   "plugin": [
     [
       "@flydotio/sprites-opencode-plugin",
-      {
-        "mcpName": "sprites-staging",
-        "url": "https://staging.example.com/mcp",
-        "timeout": 15000,
-        "headers": { "X-Environment": "staging" },
-        "commands": false,
-        "guidance": true,
-        "permissions": true,
-        "mcp": true
-      }
+      { "mcpName": "sprites-staging", "timeout": 15000 }
     ]
   ]
 }
 ```
 
-| Option        | Default                   | Meaning                                               |
-| ------------- | ------------------------- | ----------------------------------------------------- |
-| `mcpName`     | `sprites`                 | MCP server name and generated tool-name prefix.       |
-| `url`         | `https://sprites.dev/mcp` | Remote MCP endpoint. Must use HTTP or HTTPS.          |
-| `timeout`     | `60000`                   | MCP connection and discovery timeout in milliseconds. |
-| `headers`     | `{}`                      | Headers merged over the plugin's attribution headers. |
-| `mcp`         | `true`                    | Register the default MCP server.                      |
-| `commands`    | `true`                    | Register `/sprites-status` and `/sprites-smoke`.      |
-| `guidance`    | `true`                    | Add workflow guidance to relevant sessions.           |
-| `permissions` | `true`                    | Add destructive-tool approval defaults.               |
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugins": [
+    {
+      "package": "@flydotio/sprites-opencode-plugin",
+      "options": {
+        "mcpName": "sprites-staging",
+        "url": "https://staging.example.com/mcp",
+        "timeout": { "startup": 15000, "catalog": 15000 },
+        "headers": { "X-Environment": "staging" },
+        "oauth": false,
+        "codemode": false,
+        "mcp": true,
+        "commands": true,
+        "guidance": true,
+        "permissions": true,
+      },
+    },
+  ],
+}
+```
 
-When `mcp` is `false`, guidance is active only if an MCP entry with the configured `mcpName` already exists.
+| Option        | OpenCode | Default                   | Meaning                                                    |
+| ------------- | -------- | ------------------------- | ---------------------------------------------------------- |
+| `mcpName`     | 1 and 2  | `sprites`                 | MCP server name and generated tool-name prefix.            |
+| `url`         | 1 and 2  | `https://sprites.dev/mcp` | Remote MCP endpoint. Must use HTTP or HTTPS.               |
+| `timeout`     | 1 and 2  | see below                 | MCP timeouts in milliseconds.                              |
+| `headers`     | 1 and 2  | `{}`                      | Headers merged over the plugin's attribution headers.      |
+| `mcp`         | 1 and 2  | `true`                    | Register the default MCP server.                           |
+| `commands`    | 1 and 2  | `true`                    | Register `/sprites-status` and `/sprites-smoke`.           |
+| `guidance`    | 1 and 2  | `true`                    | Add workflow guidance to relevant sessions.                |
+| `permissions` | 1 and 2  | `true`                    | Guard the destructive Sprites tools.                       |
+| `oauth`       | 2 only   | OAuth enabled             | OAuth client settings, or `false` for a header credential. |
+| `codemode`    | 2 only   | OpenCode default (`true`) | Show the Sprites tools through Code Mode.                  |
 
-OpenCode uses the same timeout for the initial remote connection and tool discovery. The 60-second default limits startup stalls when `sprites.dev` is unreachable; increase it only when a slower endpoint warrants the longer connection wait.
+OpenCode 1 uses one timeout for the connection and for tool discovery. Its default is 60 seconds. OpenCode 2 separates the timeouts, and this plugin then leaves OpenCode's own defaults in place: 30 seconds for `startup`, 30 seconds for `catalog`, and 12 hours for `execution`. Under OpenCode 2, `timeout` accepts an object with `startup`, `catalog`, and `execution`, or a single number that applies to `startup` and `catalog`.
+
+The `oauth` field accepts the OpenCode 2 snake_case fields: `client_id`, `client_secret`, `scope`, `callback_port`, and `redirect_uri`. OpenCode 2 ignores an option that belongs to the other release, and so does OpenCode 1.
 
 ## Configuration and permissions
 
-The plugin adds defaults without overwriting user-owned values:
+The plugin adds defaults, but it does not replace your values:
 
-- An existing MCP entry with the configured name wins completely.
-- Existing `sprites-status` or `sprites-smoke` commands win.
-- Existing exact permission rules win.
-- A global `"deny"` is preserved.
-- A broad rule such as `"sprites_*": "allow"` is overridden by the plugin's later destructive-tool patterns. Use exact rules for the guarded tools, or set `permissions` to `false`, when blanket approval is intentional.
-- Setting the configured MCP server's `enabled` field to `false` suppresses injected guidance.
+- An MCP server that your configuration already defines with the same name wins completely.
+- To disable the Sprites server, set `enabled` to `false` (OpenCode 1) or `disabled` to `true` (OpenCode 2) on that server. The plugin then adds no guidance.
 
-The guarded patterns are `sprites_*destroy_sprite`, `sprites_*checkpoint_restore`, and `sprites_*policy_network_update`.
+Under OpenCode 1, the plugin also keeps your commands and your exact permission rules, and it preserves a global `"deny"`. Its guarded permission patterns are `sprites_*destroy_sprite`, `sprites_*checkpoint_restore`, and `sprites_*policy_network_update`. A broad rule such as `"sprites_*": "allow"` is overridden by those later patterns. Use exact rules for the guarded tools, or set `permissions` to `false`, when blanket approval is intentional.
 
-`opencode run` rejects `ask` permissions in non-interactive mode unless `--auto` is supplied; `--auto` approves them. For automation, set exact tool permissions intentionally and review the safety consequences rather than relying on an interactive prompt.
+OpenCode 2 gives plugins no permission draft, so there the plugin examines each decision as it happens:
+
+- A configured `deny` is final. OpenCode does not call the plugin.
+- A configured or default `ask` stays an `ask`.
+- An `allow` for `sprites_*destroy_sprite`, `sprites_*checkpoint_restore`, or `sprites_*policy_network_update` becomes an `ask`, and the plugin adds the reason.
+
+Set the `permissions` option to `false` when you intend to allow these tools without a prompt.
+
+`opencode run` and `opencode2 run` reject `ask` permissions in non-interactive mode. Supply `--auto` to approve them. For automation, set exact permission rules on purpose, and examine the safety consequences.
 
 The MCP connection sends fixed client-attribution headers:
 
@@ -140,40 +179,40 @@ Fly-Client-Agent: opencode
 Fly-Client-Interactive: false
 ```
 
-These headers contain no user-, machine-, organization-, repository-, or prompt-specific information. They are not used for authentication or authorization.
+These headers contain no user, machine, organization, repository, or prompt information. They are not used for authentication or authorization.
 
 ## OAuth access restrictions
 
-Restricted connector tokens use a non-empty Sprite-name prefix and may limit how many Sprites the connector can create. The common default is `mcp-`, but the prefix can be customized during OAuth. The plugin tells OpenCode to learn the actual restriction from the API and retry a failed creation once with the required prefix.
+Restricted connector tokens use a non-empty Sprite-name prefix, and they can limit how many Sprites the connector creates. The usual default is `mcp-`, but the prefix is configurable during OAuth. The plugin tells OpenCode to learn the actual restriction from the API, and to try a failed creation again one time with the required prefix.
 
-Choosing full access during OAuth removes the prefix restriction and grants access to every Sprite in the organization. Use it only when organization-wide control is intentional.
+Full access during OAuth removes the prefix restriction and gives access to every Sprite in the organization. Use it only when organization-wide control is your intention.
 
 ## Safety
 
 Sprite state is durable:
 
-- Destroying a Sprite permanently deletes its filesystem, services, checkpoints, and URL.
-- Restoring a checkpoint discards newer filesystem state.
-- Updating a network policy replaces the complete rule set rather than merging it.
+- Destruction of a Sprite permanently deletes its filesystem, services, checkpoints, and URL.
+- Restoration of a checkpoint discards newer filesystem state.
+- An update of a network policy replaces the complete rule set. It does not merge the rules.
 
-Treat anything served through a Sprite URL as potentially internet-accessible. Never expose secrets, environment variables, tokens, arbitrary files, admin or debug endpoints, or unfiltered logs over HTTP.
+Anything that a Sprite URL serves can be accessible from the internet. Do not expose secrets, environment variables, tokens, arbitrary files, admin or debug endpoints, or unfiltered logs over HTTP.
 
 ## Troubleshooting
 
-If Sprites tools are missing:
+If the Sprites tools are not available:
 
-1. Run `opencode mcp list` and confirm the configured server is present.
-2. Restart OpenCode so plugin and MCP configuration are reloaded.
-3. Run `opencode mcp auth sprites` if the server is present but unauthorized.
-4. Use `opencode mcp debug sprites` to inspect OAuth discovery and connectivity.
+1. Run `opencode mcp list`, or `opencode2 mcp list`, and make sure that the server is in the list.
+2. Restart OpenCode to load the plugin and its MCP configuration again. Under OpenCode 2, `opencode2 service restart` does this.
+3. Run `opencode mcp auth sprites`, or `opencode2 mcp auth sprites`, if the server is in the list but is not authorized.
+4. Under OpenCode 1, `opencode mcp debug sprites` reports OAuth discovery and connectivity.
 
-Replace `sprites` in those commands if you configured another `mcpName`.
+Replace `sprites` in these commands if you set a different `mcpName`.
 
 Do not install the Sprites CLI, use raw Sprites API calls, invent access tokens, or register a second Sprites MCP server as an authentication workaround.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for local development, testing, implementation notes, and the release process.
+Refer to [CONTRIBUTING.md](CONTRIBUTING.md) for local development, tests, implementation notes, and the release process.
 
 ## License
 
