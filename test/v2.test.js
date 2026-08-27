@@ -43,7 +43,18 @@ test("registers the Sprites MCP server", async () => {
       "Fly-Client-Interactive": "false",
       "Fly-Client-Agent": "opencode",
     },
+    // Code Mode reaches MCP tools through a dispatcher, and the Sprites MCP
+    // server does not support that call shape yet.
+    codemode: false,
   });
+});
+
+test("keeps Code Mode off unless it is asked for", async () => {
+  const off = await setup();
+  assert.equal(off.servers().get("sprites").codemode, false);
+
+  const on = await setup({ codemode: true });
+  assert.equal(on.servers().get("sprites").codemode, true);
 });
 
 test("supports custom MCP settings and optional features", async () => {

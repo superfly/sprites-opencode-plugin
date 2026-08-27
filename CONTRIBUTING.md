@@ -87,6 +87,7 @@ npm run test:bun
 - Guidance becomes active only for an explicit Sprites signal, a Sprites tool call, a Sprites permission decision, or a Sprites command. The active state moves to child sessions, and the plugin removes it when a session is deleted.
 - The MCP status cache is longer than one model step. The `mcp.status.changed` event clears it. An empty server list counts as unknown, because MCP configuration can be later than the first check.
 - OpenCode 2 has no compaction hook. Under OpenCode 2 the compaction instruction is part of the system guidance instead. OpenCode 1 keeps its compaction hook.
+- The plugin sets `codemode` to `false` on its MCP server. Code Mode reaches MCP tools through a dispatcher, and the Sprites MCP server does not support that call shape yet. With Code Mode off, the `sprites_*` tools are on the model's own tool list. Remove the default when the server supports the dispatcher.
 - OpenCode does not enforce `engines.opencode`. The field records intent, and it does not gate loading in either release.
 - The session `context` hook does not run for title or compaction requests. Those requests do not receive the guidance.
 

@@ -29,6 +29,7 @@ test("the OpenCode 2 entry point registers under Bun", async () => {
 
   expect(v2.id).toBe("sprites");
   expect(harness.servers().get("sprites").url).toBe("https://sprites.dev/mcp");
+  expect(harness.servers().get("sprites").codemode).toBe(false);
   expect(harness.commands().map((command) => command.name)).toEqual([
     "sprites-status",
     "sprites-smoke",

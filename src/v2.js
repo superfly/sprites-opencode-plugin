@@ -29,7 +29,7 @@ const MAX_ACTIVE_SESSIONS = 1_000;
  * @property {number | {startup?: number, catalog?: number, execution?: number}=} timeout MCP timeout overrides in milliseconds.
  * @property {Record<string, string>=} headers Additional or replacement request headers.
  * @property {false | Record<string, string | number>=} oauth OAuth client settings, or false for header credentials.
- * @property {boolean=} codemode Expose Sprites tools through Code Mode.
+ * @property {boolean=} codemode Reach the Sprites tools through Code Mode. Off by default.
  * @property {boolean=} mcp Register the default MCP server.
  * @property {boolean=} commands Register the Sprites slash commands.
  * @property {boolean=} guidance Inject Sprites workflow guidance for relevant sessions.
@@ -96,10 +96,10 @@ function parseOptions(raw) {
     ...commonOptions(input),
     timeout: timeoutOption(input.timeout),
     oauth: oauthOption(input.oauth),
-    codemode:
-      input.codemode === undefined
-        ? undefined
-        : booleanOption(input.codemode, "codemode", true),
+    // Code Mode reaches MCP tools through a dispatcher rather than the
+    // provider's tool list. The Sprites MCP server does not support that call
+    // shape yet, so the plugin turns Code Mode off for its own server.
+    codemode: booleanOption(input.codemode, "codemode", false),
   };
 }
 
@@ -112,7 +112,7 @@ function serverConfig(options) {
     headers: { ...options.headers },
   };
   if (options.oauth !== undefined) config.oauth = options.oauth;
-  if (options.codemode !== undefined) config.codemode = options.codemode;
+  config.codemode = options.codemode;
   if (options.timeout !== undefined) config.timeout = { ...options.timeout };
   return /** @type {import("@opencode-ai/plugin-v2").Mcp.ServerConfig} */ (
     /** @type {unknown} */ (config)

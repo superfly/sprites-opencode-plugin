@@ -87,7 +87,7 @@ OpenCode continues to run outside the Sprite. Local workspace and shell operatio
 - Remote files use the `sprites_file_*` tools.
 - Outbound access uses the `sprites_policy_network_*` tools.
 
-OpenCode 2 groups MCP tools in Code Mode by default. The model then calls these tools as `tools.sprites.<tool>(input)`. The permission action stays `sprites_<tool>`. To put the tools on the model's native tool list instead, set the `codemode` option to `false`.
+OpenCode 2 groups MCP tools in Code Mode by default. The model then reaches them through a dispatcher, as `tools.sprites.<tool>(input)`. The Sprites MCP server does not support that call shape yet, so the plugin turns Code Mode off for its own server. The Sprites tools are therefore on the model's native tool list, with their `sprites_*` names. Set the `codemode` option to `true` to opt in to Code Mode after the server supports it.
 
 ## What the plugin adds
 
