@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createOpencodeClient } from "@opencode-ai/sdk";
 
-import plugin from "../index.js";
+import plugin from "../src/v1.js";
 
 function fakeClient(status = "connected", onStatus = () => {}) {
   return createOpencodeClient({
