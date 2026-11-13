@@ -4,7 +4,15 @@ Use [Fly.io Sprites](https://sprites.dev) from OpenCode as persistent, isolated 
 
 One package supports both OpenCode releases. OpenCode 1 loads the package's `./server` export, and OpenCode 2 loads its `.` export. Each entry point uses the plugin API of its own release, and both share the same server defaults, tool names, guidance, commands, and destructive-tool rules.
 
-The plugin connects OpenCode to the hosted Sprites MCP server, uses OpenCode's browser-based OAuth flow, adds Sprites commands and workflow guidance, and asks for approval before destructive remote operations. You do not need to install the Sprites CLI or create an API token.
+The plugin connects OpenCode to the hosted Fly MCP server at `https://mcp.fly.io`, which serves the Sprites tools. It uses OpenCode's browser-based OAuth flow, adds Sprites commands and workflow guidance, and asks for approval before destructive remote operations. You do not need to install the Sprites CLI or create an API token.
+
+## Upgrading from the `sprites.dev/mcp` endpoint
+
+Earlier versions of this plugin connected to `https://sprites.dev/mcp`. We are transitioning to the new Fly MCP server, and the plugin now connects to it at `https://mcp.fly.io`. The MCP server name is still `sprites`, and the Sprites tools keep the same names, so your permission rules and commands continue to work.
+
+The two endpoints have separate OAuth grants. After you update the plugin, authorize one time again: restart OpenCode, then run `opencode mcp auth sprites` (or `opencode2 mcp auth sprites`) if the browser flow does not start by itself. If your configuration sets the `url` option or defines the `sprites` MCP server itself with the old address, change it to `https://mcp.fly.io`.
+
+The Fly MCP server can also offer Fly tools that are not Sprites tools, such as tools for apps and Machines. Which tools appear depends on the access that you grant on the consent screen. They carry the same `sprites_` prefix in OpenCode, because the prefix comes from the server name. Grant only Sprites access if you want only the Sprites tools.
 
 ## Requirements
 
@@ -91,7 +99,7 @@ OpenCode 2 groups MCP tools in Code Mode by default. The model then reaches them
 
 ## What the plugin adds
 
-- Hosted MCP access at `https://sprites.dev/mcp`.
+- Hosted MCP access at `https://mcp.fly.io`, registered under the server name `sprites`.
 - Sprites workflow and safety guidance in relevant sessions, but not in unrelated work.
 - Session inheritance, so a subagent that works with Sprites gets the same guidance as its parent.
 - Approval prompts for Sprite destruction, checkpoint restore, and complete network-policy replacement.
@@ -139,7 +147,7 @@ OpenCode passes an options object to the plugin. OpenCode 1 uses a tuple, and Op
 | Option        | OpenCode | Default                   | Meaning                                                    |
 | ------------- | -------- | ------------------------- | ---------------------------------------------------------- |
 | `mcpName`     | 1 and 2  | `sprites`                 | MCP server name and generated tool-name prefix.            |
-| `url`         | 1 and 2  | `https://sprites.dev/mcp` | Remote MCP endpoint. Must use HTTP or HTTPS.               |
+| `url`         | 1 and 2  | `https://mcp.fly.io`      | Remote MCP endpoint. Must use HTTP or HTTPS.               |
 | `timeout`     | 1 and 2  | see below                 | MCP timeouts in milliseconds.                              |
 | `headers`     | 1 and 2  | `{}`                      | Headers merged over the plugin's attribution headers.      |
 | `mcp`         | 1 and 2  | `true`                    | Register the default MCP server.                           |

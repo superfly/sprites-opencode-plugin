@@ -52,7 +52,7 @@ test("registers the MCP server, commands, and destructive-tool approvals", async
 
   assert.deepEqual(config.mcp.sprites, {
     type: "remote",
-    url: "https://sprites.dev/mcp",
+    url: "https://mcp.fly.io/",
     enabled: true,
     oauth: {},
     headers: {

@@ -8,7 +8,7 @@
  */
 
 export const DEFAULT_MCP_NAME = "sprites";
-export const DEFAULT_MCP_URL = "https://sprites.dev/mcp";
+export const DEFAULT_MCP_URL = "https://mcp.fly.io";
 
 export const DEFAULT_HEADERS = Object.freeze({
   "Fly-Client-Interactive": "false",

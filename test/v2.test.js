@@ -38,7 +38,7 @@ test("registers the Sprites MCP server", async () => {
 
   assert.deepEqual(servers().get("sprites"), {
     type: "remote",
-    url: "https://sprites.dev/mcp",
+    url: "https://mcp.fly.io/",
     headers: {
       "Fly-Client-Interactive": "false",
       "Fly-Client-Agent": "opencode",
