@@ -18,7 +18,7 @@ test("the OpenCode 1 entry point configures under Bun", async () => {
   await hooks.config(config);
 
   expect(v1.id).toBe("sprites");
-  expect(config.mcp.sprites.url).toBe("https://sprites.dev/mcp");
+  expect(config.mcp.sprites.url).toBe("https://mcp.fly.io/");
   expect(config.permission["sprites_*destroy_sprite"]).toBe("ask");
 });
 
@@ -28,7 +28,7 @@ test("the OpenCode 2 entry point registers under Bun", async () => {
   const cleanup = await v2.setup(harness.ctx);
 
   expect(v2.id).toBe("sprites");
-  expect(harness.servers().get("sprites").url).toBe("https://sprites.dev/mcp");
+  expect(harness.servers().get("sprites").url).toBe("https://mcp.fly.io/");
   expect(harness.servers().get("sprites").codemode).toBe(false);
   expect(harness.commands().map((command) => command.name)).toEqual([
     "sprites-status",
